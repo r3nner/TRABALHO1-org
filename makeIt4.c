@@ -26,40 +26,38 @@ int verificaEmpate() {
 
 int verificaVitoria() {
     int i, j, k;
+    int dx, dy, x, y, match;
 
     // Verifica todas as direções para cada posição
     for (i = 0; i < X; i++) {
         for (j = 0; j < Y; j++) {
+            // Continue para a próxima posição se não houver peça do jogador
             if (TABULEIRO[i][j] != jogador) continue;
 
-            // Horizontal, vertical, e diagonais
+            // Verifica nas quatro direções possíveis
             int direcoes[4][2] = {{0, 1}, {1, 0}, {1, 1}, {1, -1}};
             for (int d = 0; d < 4; d++) {
-                int dx = direcoes[d][0], dy = direcoes[d][1];
-                int match = 1;
+                dx = direcoes[d][0];
+                dy = direcoes[d][1];
+                match = 1;  // Assume que encontrou uma sequência de QUATRO
+
                 for (k = 1; k < QUATRO; k++) {
-                    int x = i + k * dx, y = j + k * dy;
-                    if (x >= X || y >= Y || y < 0 || TABULEIRO[x][y] != jogador) {
+                    x = i + k * dx;
+                    y = j + k * dy;
+
+                    // Verifica se `x` e `y` estão dentro dos limites e se a posição contém a peça do jogador
+                    if (x < 0 || x >= X || y < 0 || y >= Y || TABULEIRO[x][y] != jogador) {
                         match = 0;
                         break;
                     }
                 }
-                if (match) return 1;
+
+                // Se uma sequência de QUATRO foi encontrada
+                if (match == 1) return 1;
             }
         }
     }
     return 0;
-}
-
-int jogada(int coluna) {
-    int linha = 0;
-    while (linha < X && TABULEIRO[linha][coluna] != 0) linha++;
-    if (linha >= X) {
-        printf("Jogada indisponível! Tente novamente.\n");
-        return 0;  // Jogada inválida
-    }
-    TABULEIRO[linha][coluna] = jogador;
-    return 1;  // Jogada válida
 }
 
 int main() {
@@ -88,7 +86,11 @@ int main() {
         }
 
         // Alterna jogador
-        jogador = (jogador == 1) ? 2 : 1;
+        if (jogador == 1){
+            jogador = 2;
+        } else {
+            jogador = 1;
+        }
 
     } while (1);
     imprimeTabuleiro();
