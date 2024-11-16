@@ -34,20 +34,22 @@ int verificaVitoria () {
                 if (i + k < X && TABULEIRO[i+k][j] == jogador){
                     cont1++;
                 }
-                if (j + k < Y && TABULEIRO[i][j+k] == jogador){
-                    cont2++;
-                }
                 if (i + k < X && j + k < Y && TABULEIRO[i+k][j+k] == jogador){
-                    cont3++; 
+                    cont2++; 
                 }
                 if (j-k >= 0 && j+k < Y && TABULEIRO[i+k][j-k] == jogador ){ 
+                    cont3++;
+                }
+                if (j + k < Y && TABULEIRO[i][j+k] == jogador){
                     cont4++;
                 }
+                
+                
 
             }
                 if (cont1 == 4 || cont2 == 4 || cont3 == 4 || cont4 == 4){
                     return 1;
-                    
+
                 } else {
                     cont1 = 0;
                     cont2 = 0;  
@@ -119,6 +121,4 @@ int main() {
 
     return 0;
 }
-
-
 
