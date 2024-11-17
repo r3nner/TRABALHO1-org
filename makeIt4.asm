@@ -15,9 +15,6 @@ cont2:     .word 0
 cont3:     .word 0
 cont4:     .word 0
 
-# vetor de direções {dx, dy} para 4 direções
-direcoes: .word 0, 1, 1, 0, 1, 1, 1, -1  
-
 msg1: .asciiz "Jogador "
 msg2: .asciiz ", digite uma coluna [1-6]:\n"
 msgEmpate: .asciiz "Empate!\n"
@@ -308,6 +305,7 @@ indisponivel:
 
 
 
+
 verificaVitoria:
 
     add $sp, $sp, -12
@@ -331,6 +329,14 @@ foriVitoria:
     lw $s0, linhas     #carrega linhas
     bge $t0, $s0, FimForiVitoria  # verificação do for. (i >= linhas)
 
+    move $a0, $t0  # imprime i
+    li $v0, 1
+    syscall
+
+    la $a0, newline
+    li $v0, 4
+    syscall
+
     sw $zero, 4($sp)   #carrega j
 forjVitoria:
 
@@ -348,25 +354,50 @@ forjVitoria:
 
     lw $t2, 8($sp)      # k = $t2
 
+    move $a0, $t1  # imprime j
+    li $v0, 1
+    syscall
+
+    la $a0, newline
+    li $v0, 4
+    syscall
+
 forkVitoria:
     li $t7, 4
     bge $t2, $t7, FimForkVitoria  # verificação do for. (k >= 4)
     lw $s2, jogador
     la $s3, TABULEIRO
 
+    move $a0, $t2  # imprime k
+    li $v0, 1
+    syscall
+
+    la $a0, space
+    li $v0, 4
+    syscall
 
 if1:   # if (i + k < X && TABULEIRO[i+k][j] == jogador){
 
     add $t7, $t0, $t2 #$t7 = i + k
+    
+   
+
     bge $t7, $s0, if2  # if (i + k >= linhas)
     mul $t8, $t7, $s1  # $t8 = (i + k) * colunas
     add $t9, $t8, $t1  # $t9 = (i + k) * colunas + j
     mul $t9, $t9, 4    # $t9 = ((i + k) * colunas + j) * 4
+
+   
     add $t9, $s3, $t9  # $t9 = &TABULEIRO[(i + k)][j]
     lw $t9, 0($t9)     # $t9 = TABULEIRO[(i + k)][j]
     bne $t9, $s2, if2  # if (TABULEIRO[(i + k)][j] != jogador)
     addi $t3, $t3, 1   # cont1++
+    li $t7, 4
+    bge $t3, $t7, Vitoria  # if (cont1 >= 4)
+
 if2:   #if (i + k < X && j + k < Y && TABULEIRO[i+k][j+k] == jogador){
+    
+    add $t7, $t0, $t2 #$t7 = i + k
     bge $t7, $s0, if3  # if (i + k >= linhas)
     add $t8, $t1, $t2  # $t8 = j + k
     bge $t8, $s1, if3  # if (j + k >= colunas)
@@ -378,45 +409,85 @@ if2:   #if (i + k < X && j + k < Y && TABULEIRO[i+k][j+k] == jogador){
     lw $t9, 0($t9)     # $t9 = TABULEIRO[(i + k)][j + k]
     bne $t9, $s2, if3  # if (TABULEIRO[(i + k)][j + k] != jogador)
     addi $t4, $t4, 1   # cont2++
+    li $t7, 4
+    bge $t4, $t7, Vitoria  # if (cont2 >= 4)
+
 
 if3:   #if (j-k >= 0 && j+k < Y && TABULEIRO[i+k][j-k] == jogador ){ 
     bge $t8, $s1, if4  # if (j + k >= colunas)
     sub $t9, $t1, $t2  # $t9 = j - k
     blt $t9, $zero, if4  # if (j - k < 0)
-    mul $s4, $t9, $s1  # $s4 = (j - k) * colunas
-    add $s4, $s4, $t7  # $s4 = (j - k) * colunas + i+k
-    mul $s4, $s4, 4    # $s4 = ((j - k) * colunas + i+k) * 4
-    add $s4, $s3, $s4  # $s4 = &TABULEIRO[j - k][i+k]
+    mul $s4, $t7, $s1  # $s4 = (i + k) * colunas
+    add $s4, $s4, $t9  # $s4 = (i + k) * colunas + (j - k)
+    mul $s4, $s4, 4    # $s4 = ((i + k) * colunas + (j - k)) * 4
+    add $s4, $s3, $s4  # $s4 = &TABULEIRO[i + k][j - k]
     lw $s4, 0($s4)     # $s4 = TABULEIRO[j - k][i+k]
     bne $s4, $s2, if4  # if (TABULEIRO[j - k][i+k] != jogador)
     addi $t5, $t5, 1   # cont3++
+    li $t7, 4
+    bge $t5, $t7, Vitoria  # if (cont3 >= 4)
+
 
 if4:   #if (j + k < Y && TABULEIRO[i][j+k] == jogador){
     add $t8, $t1, $t2             # $t8 = j + k
     bge $t8, $s1, FimForkVitoria  # if (j + k >= colunas)
-    mul $t9, $t8, $s1             # $t9 = (j+k) * colunas
-    add $t9, $t9, $t0             # $t9 = (j+k) * colunas + i
-    mul $t9, $t9, 4               # $t9 = ((j+k) * colunas + i) * 4
-    add $t9, $s3, $t9             # $t9 = &TABULEIRO[j+k][i]
+    mul $t9, $t0, $s1  # $t9 = i * colunas
+    add $t9, $t9, $t8  # $t9 = i * colunas + (j + k)
+    mul $t9, $t9, 4    # $t9 = ((i * colunas) + (j + k)) * 4
+    add $t9, $s3, $t9  # $t9 = &TABULEIRO[i][j + k]
+
     lw $t9, 0($t9)                # $t9 = TABULEIRO[j+k][i]
-    bne $t9, $s2, FimForkVitoria  # if (TABULEIRO[j+k][i] != jogador)
-    addi $t6, $t6, 1              # cont4++
 
     addi $t2, $t2, 1   # k++
     sw $t2, 8($sp)     # atualiza k na pilha
+    
+    bne $t9, $s2, forkVitoria  # if (TABULEIRO[j+k][i] != jogador) continue;
+    addi $t6, $t6, 1              # cont4++
+    li $t7, 4
+    bge $t6, $t7, Vitoria         # if (cont4 >= 4)
 
+    
 
     j forkVitoria
 
 FimForkVitoria:
-    # if (cont1 == 4 || cont2 == 4 || cont3 == 4 || cont4 == 4){
-    li $t7, 4
-    bge $t3, $t7, Vitoria  # if (cont1 >= 4)
-    bge $t4, $t7, Vitoria  # if (cont2 >= 4)
-    bge $t5, $t7, Vitoria  # if (cont3 >= 4)
-    bge $t6, $t7, Vitoria  # if (cont4 >= 4)
 
 
+            # Imprimir valores dos contadores
+    move $a0, $t3  # Valor de cont1
+    li $v0, 1
+    syscall
+
+    move $a0, $t4  # Valor de cont2
+    li $v0, 1
+    syscall
+
+    move $a0, $t5  # Valor de cont3
+    li $v0, 1
+    syscall
+
+    move $a0, $t6  # Valor de cont4
+    li $v0, 1
+    syscall
+
+     # Depuração: imprime i, j, k, e TABULEIRO[i + k][j]
+    la $a0, newline
+    li $v0, 4
+    syscall
+
+    move $a0, $t0        # imprime i
+    li $v0, 1
+    syscall
+
+    move $a0, $t1        # imprime j
+    li $v0, 1
+    syscall
+
+
+    la $a0, newline
+    li $v0, 4
+    syscall
+    syscall
 
     addi $t1, $t1, 1   # j++
     sw $t1, 4($sp)     # atualiza j na pilha
@@ -437,4 +508,6 @@ Vitoria:
     add $sp, $sp, 12
     li $v0, 1
     jr $ra
+
+
 
