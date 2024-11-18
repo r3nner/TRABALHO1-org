@@ -280,9 +280,9 @@ whileColuna:
 fimWhileColuna:
     # Verifica se a jogada é válida: linha >= X ou coluna >= Y ou coluna < 0
     lw $t0, 4($sp)         # Carrega linha
-    lw $t1, X              # Carrega X
+    lw $t1, linhas              # Carrega linhas
     lw $t2, 0($sp)         # Carrega coluna
-    lw $t3, Y              # Carrega Y
+    lw $t3, colunas              # Carrega colunas
     bge $t0, $t1, indisponivel   # Se linha >= X, vai para indisponível
     bge $t2, $t3, indisponivel   # Se coluna >= Y, vai para indisponível
     blt $t2, $zero, indisponivel # Se coluna < 0, vai para indisponível
@@ -388,29 +388,75 @@ if2:   #if (i + k < X && j + k < Y && TABULEIRO[i+k][j+k] == jogador){
     add $t9, $s3, $t9  # $t9 = &TABULEIRO[(i + k)][j + k]
     lw $t9, 0($t9)     # $t9 = TABULEIRO[(i + k)][j + k]
     bne $t9, $s2, if3  # if (TABULEIRO[(i + k)][j + k] != jogador)
+
+    
+
     addi $t4, $t4, 1   # cont2++
     li $t7, 4
     bge $t4, $t7, Vitoria  # if (cont2 >= 4)
-
-
 if3:   # if (j - k >= 0 && i + k < linhas && TABULEIRO[i + k][j - k] == jogador)
-    add $t7, $t0, $t2  # $t7 = i + k
-    bge $t7, $s0, if4  # if (i + k >= linhas), salta para if4
-    sub $t9, $t1, $t2  # $t9 = j - k
-    blt $t9, $zero, if4  # if (j - k < 0), salta para if4
-    
-    mul $s4, $t7, $s1  # $s4 = (i + k) * colunas
-    add $s4, $s4, $t9  # $s4 = (i + k) * colunas + (j - k)
-    mul $s4, $s4, 4    # $s4 = ((i + k) * colunas + (j - k)) * 4
-    la $s3, TABULEIRO  # $s3 = &TABULEIRO[0][0]
-    add $s4, $s3, $s4  # $s4 = &TABULEIRO[i + k][j - k]
-    lw $s4, 0($s4)     # $s4 = TABULEIRO[i + k][j - k]
-    
-    bne $s4, $s2, if4  # if (TABULEIRO[i + k][j - k] != jogador), salta para if4
-    addi $t5, $t5, 1   # cont3++
-    li $t7, 4
-    bge $t5, $t7, Vitoria  # if (cont3 >= 4), salta para Vitoria
 
+    # Debug: Print j - k
+    sub $t8, $t1, $t2  # $t8 = j - k
+    li $v0, 1          # syscall para imprimir inteiro
+    move $a0, $t8      # passa $t8 para $a0
+    #syscall
+    li $v0, 4          # syscall para imprimir texto
+    la $a0, newline    # imprime uma nova linha
+    #syscall
+
+    blt $t8, $zero, if4  # if (j - k < 0), salta para if4
+
+    # Debug: Print i + k
+    add $t7, $t0, $t2  # $t7 = i + k
+    li $v0, 1          # syscall para imprimir inteiro
+    move $a0, $t7      # passa $t7 para $a0
+    #syscall
+    li $v0, 4          # syscall para imprimir texto
+    la $a0, newline    # imprime uma nova linha
+    #syscall
+
+    bge $t7, $s0, if4  # if (i + k >= linhas), salta para if4
+
+    # Debug: Print TABULEIRO address and value
+    mul $t9, $t7, $s1  # $t9 = (i + k) * colunas
+    add $t9, $t9, $t8  # $t9 = (i + k) * colunas + (j - k)
+    mul $t9, $t9, 4    # $t9 = ((i + k) * colunas + (j - k)) * 4
+    add $t9, $s3, $t9  # $t9 = &TABULEIRO[i + k][j - k]
+
+    # Debug: Print TABULEIRO address
+    li $v0, 1
+    move $a0, $t9
+    #syscall
+    li $v0, 4
+    la $a0, newline
+    #syscall
+
+    lw $t9, 0($t9)     # $t9 = TABULEIRO[i + k][j - k]
+
+    # Debug: Print TABULEIRO[i + k][j - k]
+    li $v0, 1
+    move $a0, $t9
+    #syscall
+    li $v0, 4
+    la $a0, newline
+    #syscall
+
+    bne $t9, $s2, if4  # if (TABULEIRO[i + k][j - k] != jogador), salta para if4
+
+    addi $t5, $t5, 1   # cont3++
+
+    # Debug: Print cont3
+    li $v0, 1
+    move $a0, $t5
+    syscall
+    li $v0, 4
+    la $a0, newline
+    syscall
+    syscall
+
+    li $t7, 4
+    bge $t5, $t7, Vitoria  # if (cont3 >= 4), vitória
 
 if4:   #if (j + k < Y && TABULEIRO[i][j+k] == jogador){
     add $t8, $t1, $t2             # $t8 = j + k
