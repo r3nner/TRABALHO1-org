@@ -4,9 +4,9 @@ X: .word 5
 Y:  .word 6
 QUATRO: .word 4
 
-TABULEIRO: .word 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-linhas:    .word 6
-colunas:   .word 7
+TABULEIRO: .word 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+linhas:    .word 5
+colunas:   .word 6
 jogador:   .word 1
 
 #contadores para verificar vitória
@@ -16,7 +16,7 @@ cont3:     .word 0
 cont4:     .word 0
 
 msg1: .asciiz "Jogador "
-msg2: .asciiz ", digite uma coluna [1-7]:\n"
+msg2: .asciiz ", digite uma coluna [1-6]:\n"
 msgEmpate: .asciiz "Empate!\n"
 msg3: .asciiz " venceu!\n"
 msg4: .asciiz "Jogada indisponível! Tente novamente.\n"
@@ -49,7 +49,7 @@ do:
 
 endIfEmpate:
 
-    # printf("Jogador %d, digite uma coluna [1-%d]: ", jogador, colunas)
+    # printf("Jogador %d, digite uma coluna [1-%d]: ", jogador, Y)
 
     lw $t0, jogador      # carrega o valor do jogador
 
@@ -63,7 +63,7 @@ endIfEmpate:
     li $v0, 1            # syscall para imprimir inteiro
     syscall              # executa a syscall
 
-    # imprime a segunda parte da mensagem (", digite uma coluna [1-7]: ")
+    # imprime a segunda parte da mensagem (", digite uma coluna [1-6]: ")
     la $a0, msg2         # carrega o endereço da string final
     li $v0, 4            # syscall para imprimir string
     syscall              # executa a syscall
@@ -134,13 +134,13 @@ FimPrograma:
 imprimeTabuleiro:
     add $sp, $sp, -8             # reserva espaço na pilha para i e j
 
-    # inicializa o índice i com linhas - 1
+    # inicializa o índice i com X - 1
     la $t0, linhas
     lw $t0, 0($t0)
     addi $t0, $t0, -1
     sw $t0, 0($sp)               # salva i na pilha
 
-foriImprime:                     # loop externo: for (int i = linhas - 1; i >= 0; i--)
+foriImprime:                     # loop externo: for (int i = X - 1; i >= 0; i--)
     lw $t1, 0($sp)               # carrega i
     blt $t1, $zero, fimForiImprime  # se i < 0, sai do loop externo
 
@@ -148,18 +148,18 @@ foriImprime:                     # loop externo: for (int i = linhas - 1; i >= 0
     li $t2, 0
     sw $t2, 4($sp)               # salva j na pilha
 
-forjImprime:                     # loop interno: for (int j = 0; j < colunas; j++)
+forjImprime:                     # loop interno: for (int j = 0; j < Y; j++)
     lw $t2, 4($sp)               # carrega j
     lw $t3, colunas
-    bge $t2, $t3, fimForjImprime  # se j >= colunas, sai do loop interno
+    bge $t2, $t3, fimForjImprime  # se j >= Y, sai do loop interno
 
     # calcula o endereço de TABULEIRO[i][j]
     lw $t1, 0($sp)               # carrega i
     lw $t2, 4($sp)               # carrega j
     lw $t6, colunas              # carrega o número de colunas
-    mul $t4, $t1, $t6            # t4 = i * 7 (índice da linha)
-    add $t4, $t4, $t2            # t4 = i * 7 + j
-    mul $t4, $t4, 4              # t4 = (i * 7 + j) * 4 (para acessar por bytes)
+    mul $t4, $t1, $t6            # t4 = i * 6 (índice da linha)
+    add $t4, $t4, $t2            # t4 = i * 6 + j
+    mul $t4, $t4, 4              # t4 = (i * 6 + j) * 4 (para acessar por bytes)
     la $t5, TABULEIRO            # carrega a base de TABULEIRO
     add $t5, $t5, $t4            # endereço de TABULEIRO[i][j]
     lw $t6, 0($t5)               # carrega o valor de TABULEIRO[i][j] em $t6
@@ -255,16 +255,16 @@ jogada:
 
 whileColuna:
     lw $t0, 4($sp)         # Carrega linha em $t0
-    lw $t1, linhas         # Carrega linhas em $t1 (número de linhas)
-    bge $t0, $t1, fimWhileColuna  # Se linha >= linhas, sai do loop
+    lw $t1, X              # Carrega X em $t1 (número de linhas)
+    bge $t0, $t1, fimWhileColuna  # Se linha >= X, sai do loop
 
     # Calcula o endereço de TABULEIRO[linha][coluna]
     la $t2, TABULEIRO      # Carrega o endereço base de TABULEIRO em $t2
     lw $t3, 0($sp)         # Carrega coluna em $t3
-    lw $t9, colunas
-    mul $t4, $t0, $t9       # $t4 = linha * colunas
-    add $t4, $t4, $t3      # $t4 = linha * colunas + coluna
-    mul $t4, $t4, 4        # $t4 = (linha * colunas + coluna) * 4 (offset em bytes)
+    lw $t9, Y
+    mul $t4, $t0, $t9       # $t4 = linha * Y
+    add $t4, $t4, $t3      # $t4 = linha * Y + coluna
+    mul $t4, $t4, 4        # $t4 = (linha * Y + coluna) * 4 (offset em bytes)
     add $t9, $t2, $t4      # $t9 = endereço de TABULEIRO[linha][coluna]
 
     # Verifica se TABULEIRO[linha][coluna] é 0
@@ -278,13 +278,13 @@ whileColuna:
     j whileColuna          # Continua o loop
 
 fimWhileColuna:
-    # Verifica se a jogada é válida: linha >= linhas ou coluna >= colunas ou coluna < 0
+    # Verifica se a jogada é válida: linha >= X ou coluna >= Y ou coluna < 0
     lw $t0, 4($sp)         # Carrega linha
     lw $t1, linhas              # Carrega linhas
     lw $t2, 0($sp)         # Carrega coluna
     lw $t3, colunas              # Carrega colunas
-    bge $t0, $t1, indisponivel   # Se linha >= linhas, vai para indisponível
-    bge $t2, $t3, indisponivel   # Se coluna >= colunas, vai para indisponível
+    bge $t0, $t1, indisponivel   # Se linha >= X, vai para indisponível
+    bge $t2, $t3, indisponivel   # Se coluna >= Y, vai para indisponível
     blt $t2, $zero, indisponivel # Se coluna < 0, vai para indisponível
 
 atribui:
@@ -304,167 +304,94 @@ indisponivel:
     jr $ra                 # Retorna
 
 
-
-
-
 verificaVitoria:
-
     add $sp, $sp, -12
-    #i = 0($sp), j = 4($sp), k = 8($sp)
-    sw $zero, 0($sp)  #i = 0
+    sw $zero, 0($sp)         # i = 0
 
-#mapa de registradores:
+# Mapa de registradores:
 # $t0 = i
 # $t1 = j
 # $t2 = k
-# $t3 = cont1
-# $t4 = cont2
-# $t5 = cont3
-# $t6 = cont4
+# $t5 = cont
 # $s0 = linhas
 # $s1 = colunas
 # $s2 = jogador 
 # $s3 = &TABULEIRO[0][0]
+    la $s3, TABULEIRO
+    li $t5, 0
 foriVitoria:
-    lw $t0, 0($sp)     #carrega i
-    lw $s0, linhas     #carrega linhas
-    lw $s1, colunas
-    lw $s2, jogador
-    la $s3, TABULEIRO
-    bge $t0, $s0, FimForiVitoria  # verificação do for. (i >= linhas)
+    lw $t0, 0($sp)           # Carrega i
+    lw $s0, linhas           # Carrega linhas
+    bge $t0, $s0, FimForiVitoria  # Verificação do for (i >= linhas)
 
-   
-    sw $zero, 4($sp)   #carrega j
+    sw $zero, 4($sp)         # j = 0
 forjVitoria:
+    lw $t1, 4($sp)           # Carrega j
+    lw $s1, colunas          # Carrega colunas
+    bge $t1, $s1, FimForjVitoria  # Verificação do for (j >= colunas)
 
-    #conts = 0
-    add $t3, $zero, $zero
-    add $t4, $zero, $zero
-    add $t5, $zero, $zero
-    add $t6, $zero, $zero
-    
+    # Reseta contador
+    add $t5, $zero, $zero    # cont = 0
 
-    lw $t1, 4($sp)         # carrega j
-    lw $s1, colunas        # carrega colunas
-    bge $t1, $s1, FimForjVitoria  # verificação do for. (j >= colunas)
-    sw $zero, 8($sp)       # k = 0
-
-    lw $t2, 8($sp)      # k = $t2
-
-    
+    sw $zero, 8($sp)         # k = 0
 forkVitoria:
-    li $t7, 4
-    bge $t2, $t7, FimForkVitoria  # verificação do for. (k >= 4)
-    lw $s2, jogador
-    la $s3, TABULEIRO
+    lw $t2, 8($sp)           # Carrega k
+    li $t6, 4
+    bge $t2, $t6, FimForkVitoria  # Verificação do for (k >= 4)
 
+    # Verifica limites: j - k >= 0
+    sub $t7, $t1, $t2        # $t7 = j - k
+    blt $t7, $zero, FimForkVitoria
 
-if1:   # if (i + k < linhas && TABULEIRO[i+k][j] == jogador){
+    # Verifica limites: i + k < linhas
+    add $t8, $t0, $t2        # $t8 = i + k
+    bge $t8, $s0, FimForkVitoria
 
-    add $t7, $t0, $t2 #$t7 = i + k
-    
-   
+    # Verifica limites: j - k < colunas
+    bge $t7, $s1, FimForkVitoria
 
-    bge $t7, $s0, if2  # if (i + k >= linhas)
-    mul $t8, $t7, $s1  # $t8 = (i + k) * colunas
-    add $t9, $t8, $t1  # $t9 = (i + k) * colunas + j
-    mul $t9, $t9, 4    # $t9 = ((i + k) * colunas + j) * 4
+    # Calcula o endereço de TABULEIRO[i + k][j - k]
+    mul $t9, $t8, $s1        # $t9 = (i + k) * colunas
+    add $t9, $t9, $t7        # $t9 = (i + k) * colunas + (j - k)
+    mul $t9, $t9, 4          # $t9 = ((i + k) * colunas + (j - k)) * 4
+    add $t9, $s3, $t9        # $t9 = &TABULEIRO[i + k][j - k]
 
-   
-    add $t9, $s3, $t9  # $t9 = &TABULEIRO[(i + k)][j]
-    lw $t9, 0($t9)     # $t9 = TABULEIRO[(i + k)][j]
-    bne $t9, $s2, if2  # if (TABULEIRO[(i + k)][j] != jogador)
-    addi $t3, $t3, 1   # cont1++
-    li $t7, 4
-    bge $t3, $t7, Vitoria  # if (cont1 >= 4)
+    # Carrega o valor da posição TABULEIRO[i + k][j - k]
+    lw $t4, 0($t9)           # $t4 = TABULEIRO[i + k][j - k]
+    lw $s2, jogador          # Carrega o valor do jogador
+    bne $t4, $s2, ResetContador # Se for diferente, reseta cont
 
-if2:   #if (i + k < X && j + k < colunas && TABULEIRO[i+k][j+k] == jogador){
-    
-    add $t7, $t0, $t2 #$t7 = i + k
-    bge $t7, $s0, if3  # if (i + k >= linhas)
-    add $t8, $t1, $t2  # $t8 = j + k
-    bge $t8, $s1, if3  # if (j + k >= colunas)
+    # Incrementa contador
+    addi $t5, $t5, 1
+    li $t6, 4
+    bge $t5, $t6, Vitoria
 
-    mul $t9, $t7, $s1  # $t9 = (i + k) * colunas
-    add $t9, $t9, $t8  # $t9 = (i + k) * colunas + j + k
-    mul $t9, $t9, 4    # $t9 = ((i + k) * colunas + j + k) * 4
-    add $t9, $s3, $t9  # $t9 = &TABULEIRO[(i + k)][j + k]
-    lw $t9, 0($t9)     # $t9 = TABULEIRO[(i + k)][j + k]
-    bne $t9, $s2, if3  # if (TABULEIRO[(i + k)][j + k] != jogador)
+    j IncrementaK
 
-    
+ResetContador:
+    add $t5, $zero, $zero    # Reseta cont
 
-    addi $t4, $t4, 1   # cont2++
-    li $t7, 4
-    bge $t4, $t7, Vitoria  # if (cont2 >= 4)
-if3:   # if (j - k >= 0 && i + k < linhas && TABULEIRO[i + k][j - k] == jogador)
-
-
-    la $s3, TABULEIRO
-
-    sub $t8, $t1, $t2         # $t8 = j - k
-    blt $t8, $zero, if4       # if (j - k < 0), pula para if4
-
-    add $t7, $t0, $t2         # $t7 = i + k
-    bge $t7, $s0, if4         # if (i + k >= linhas), pula para if4
-
-    mul $t9, $t7, $s1         # $t9 = (i + k) * colunas
-    add $t9, $t9, $t8         # $t9 = (i + k) * colunas + (j - k)
-    mul $t9, $t9, 4           # $t9 = ((i + k) * colunas + (j - k)) * 4
-    add $t9, $s3, $t9         # $t9 = &TABULEIRO[i + k][j - k]
-
-    lw $t9, 0($t9)            # $t9 = TABULEIRO[i + k][j - k]
-    bne $t9, $s2, if4         # if (TABULEIRO[i + k][j - k] != jogador), pula para if4
-
-    addi $t5, $t5, 1          # cont3++
-    li $t7, 4
-    bge $t5, $t7, Vitoria     # if (cont3 >= 4), vitória
-
-
-if4:   #if (j + k < colunas && TABULEIRO[i][j+k] == jogador){
-    add $t8, $t1, $t2             # $t8 = j + k
-    bge $t8, $s1, FimForkVitoria  # if (j + k >= colunas)
-    mul $t9, $t0, $s1  # $t9 = i * colunas
-    add $t9, $t9, $t8  # $t9 = i * colunas + (j + k)
-    mul $t9, $t9, 4    # $t9 = ((i * colunas) + (j + k)) * 4
-    add $t9, $s3, $t9  # $t9 = &TABULEIRO[i][j + k]
-
-    lw $t9, 0($t9)                # $t9 = TABULEIRO[j+k][i]
-
-    addi $t2, $t2, 1   # k++
-    sw $t2, 8($sp)     # atualiza k na pilha
-
-    bne $t9, $s2, forkVitoria  # if (TABULEIRO[j+k][i] != jogador) continue;
-    addi $t6, $t6, 1              # cont4++
-    li $t7, 4
-    bge $t6, $t7, Vitoria         # if (cont4 >= 4)
-
-    
-
+IncrementaK:
+    addi $t2, $t2, 1         # k++
+    sw $t2, 8($sp)
     j forkVitoria
 
 FimForkVitoria:
-
-
-    addi $t1, $t1, 1   # j++
-    sw $t1, 4($sp)     # atualiza j na pilha
+    addi $t1, $t1, 1         # j++
+    sw $t1, 4($sp)
     j forjVitoria
 
 FimForjVitoria:
-
-    addi $t0, $t0, 1   # i++
-    sw $t0, 0($sp)     # atualiza i na pilha
+    addi $t0, $t0, 1         # i++
+    sw $t0, 0($sp)
     j foriVitoria
 
 FimForiVitoria:
     add $sp, $sp, 12
-    li $v0, 0
+    li $v0, 0                # Retorna 0 (sem vitória)
     jr $ra
 
 Vitoria:
     add $sp, $sp, 12
-    li $v0, 1
+    li $v0, 1                # Retorna 1 (vitória)
     jr $ra
-
-
-
