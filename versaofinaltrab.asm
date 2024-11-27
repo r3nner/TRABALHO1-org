@@ -19,6 +19,8 @@ cont4:     .word 0
 
 msg1: .asciiz "Jogador "
 msg2: .asciiz ", digite uma coluna [1-7]:\n"
+am:   .asciiz "amarelo"
+ver:  .asciiz "vermelho"
 msgEmpate: .asciiz "Empate!\n"
 msg3: .asciiz " venceu!\n"
 msg4: .asciiz "Jogada indisponível! Tente novamente.\n"
@@ -469,11 +471,19 @@ endIfEmpate:
     li $v0, 4            # syscall para imprimir string
     syscall              # executa a syscall
 
-    # imprime o número do jogador
-    move $a0, $t0        # move o número do jogador para $a0
-    li $v0, 1            # syscall para imprimir inteiro
+    #imprime o jogador
+    li $t1, 1
+    beq $t0, $t1, vermelho1
+    la $a0, am         # carrega o endereço da string "amarelo"
+    li $v0, 4            # syscall para imprimir string
+    syscall              # executa a syscall
+    j amarelo1
+vermelho1:
+    la $a0, ver        # carrega o endereço da string "vermelho"
+    li $v0, 4            # syscall para imprimir string
     syscall              # executa a syscall
 
+amarelo1:
     # imprime a segunda parte da mensagem (", digite uma coluna [1-7]: ")
     la $a0, msg2         # carrega o endereço da string final
     li $v0, 4            # syscall para imprimir string
@@ -481,18 +491,41 @@ endIfEmpate:
 
     
 lerColuna:
-    # scanf("%d", &coluna)
+    # scanf("%c", &coluna)
     # coluna--
-    li $v0, 5                 # código de syscall para ler um inteiro
-    syscall                   # executa a syscall, o valor lido fica em $v0
-    addi $v0, $v0, -1         # coluna--
+
+    li $v0, 12                  # syscall para ler um caractere
+    syscall                     # executa a syscall
+
+    # Verifica se está no intervalo ASCII de '1' (49) a '7' (55)
+    li $t0, 49                  # Código ASCII de '1'
+    li $t1, 55                 # Código ASCII de '7'
+    blt $v0, $t0, erroEntrada   # Se menor que '1', erro
+    bgt $v0, $t1, erroEntrada   # Se maior que '7', erro
+
+    # Converte o caractere lido para número: valor = char - '0'
+    li $t2, 48                  # Código ASCII de '0'
+    sub $v0, $v0, $t2           # Converte caractere ASCII para número
+    addi $v0, $v0, -1           # Ajusta para índice 0-based (coluna--)
+    sw $v0, 0($sp)              # Armazena o valor convertido
+
+    # Chama a função jogada
+    move $a0, $v0               # Passa o valor para jogada
+    jal jogada
+
+    li $t0, 1                   # Verifica se a jogada foi válida
+    bne $v0, $t0, lerColuna     # Se inválida, peça outra entrada
+    j continue                        # Continua o loop principal
+
+erroEntrada:
+    # Imprime mensagem de erro
+    la $a0, msg4                # "Jogada indisponível! Tente novamente."
+    li $v0, 4                   # Syscall para imprimir string
+    syscall                     # Executa syscall
+    j lerColuna                 # Pede nova entrada
     sw $v0, 0($sp)            # armazena o valor lido na variável 'coluna'
 
-    # se (!jogada(coluna)) continue
-    move $a0, $v0
-    jal jogada
-    li $t0, 1
-    bne $v0, $t0, do
+continue:
 
     # se (verificaVitoria()) {
     jal verificaVitoria
@@ -507,11 +540,20 @@ lerColuna:
     li $v0, 4            # syscall para imprimir string
     syscall              # executa a syscall
 
-    # imprime o número do jogador
-    lw $a0, jogador        # move o número do jogador para $a0
-    li $v0, 1            # syscall para imprimir inteiro
+    # imprime o jogador 
+    li $t1, 1
+    lw $t0, jogador
+    beq $t0, $t1, vermelho2
+    la $a0, am         # carrega o endereço da string "amarelo"
+    li $v0, 4            # syscall para imprimir string
     syscall              # executa a syscall
-
+    j vermelho2
+vermelho2:
+    la $a0, ver         # carrega o endereço da string "vermelho"
+    li $v0, 4            # syscall para imprimir string
+    syscall              # executa a syscall
+    
+amarelo2:
     # imprime a segunda parte da mensagem ("venceu!\n")
     la $a0, msg3        # carrega o endereço da string final
     li $v0, 4            # syscall para imprimir string
@@ -665,6 +707,12 @@ jogada:
     sw $a0, 0($sp)         # Salva coluna em 0($sp)
     sw $zero, 4($sp)       # Inicializa linha = 0 em 4($sp)
 
+    #if (coluna < 0 || coluna >= colunas)
+    lw $t0, 0($sp)         # Carrega coluna em $t0
+    lw $t1, colunas        # Carrega colunas em $t1
+    blt $t0, $zero, indisponivel  # Se coluna < 0, vai para indisponível
+    bge $t0, $t1, indisponivel  # Se coluna >= colunas, vai para indisponível
+    
 whileColuna:
     lw $t0, 4($sp)         # Carrega linha em $t0
     lw $t1, linhas         # Carrega linhas em $t1 (número de linhas)
