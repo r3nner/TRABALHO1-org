@@ -450,9 +450,8 @@ do:
     jal entrada_pecas
     jal imprimeTabuleiro
 
-    li $t0, 1
     jal verificaEmpate
-    li $v0, 1
+    li $t0, 1
     beq $t0, $v0, endIfEmpate # se (verificaEmpate()) {
 
     # printf("Empate!")
@@ -584,7 +583,6 @@ FimPrograma:
     syscall              # executa a syscall
 
 
-
 imprimeTabuleiro:
     add $sp, $sp, -8             # reserva espaço na pilha para i e j
 
@@ -655,115 +653,109 @@ fimForiImprime:
     jr $ra                        # retorna para o chamador
 
 verificaEmpate:
-    # Registradores usados:
+    #registradores usados:
     # $t9 = índice da coluna (j)
     # $t1 = número de colunas
     # $t2 = índice da última linha
     # $t3 = valor da célula atual (TABULEIRO[linhas-1][j])
     # $t4 = endereço calculado da célula
 
-    # Carrega o número de colunas em $t1
+    #carrega o número de colunas em $t1
     lw $t1, colunas               
 
-    # Carrega o índice da última linha (linhas - 1) em $t2
+    #carrega o índice da última linha em $t2
     lw $t2, linhas                
-    subi $t2, $t2, 1              # Última linha: linhas - 1
+    subi $t2, $t2, 1              #ultima linha: linhas-1
 
-    # Inicializa o índice da coluna (j = 0)
+    #inicializa o índice da coluna (j = 0)
     li $t9, 0                     
 
 loopColunas:
-    # Verifica se j >= colunas
+    #verifica se j >= colunas
     beq $t9, $t1, fimVerificaEmpate 
 
-    # Calcula o índice unidimensional: (linhas - 1) * colunas + j
-    mul $t4, $t2, $t1             # (linhas - 1) * colunas
-    add $t4, $t4, $t9             # (linhas - 1) * colunas + j
-    mul $t4, $t4, 4               # Multiplica por 4 para obter o deslocamento em bytes
+    #calcula o índice do vetor
+    mul $t4, $t2, $t1             # (linhas-1) * colunas
+    add $t4, $t4, $t9             # (linhas-1) * colunas+j
+    mul $t4, $t4, 4               #multiplica por 4 para obter o deslocamento em bytes
 
-    # Calcula o endereço da célula e carrega o valor
-    la $t5, TABULEIRO             # Carrega a base do TABULEIRO
-    add $t5, $t5, $t4             # Endereço de TABULEIRO[linhas-1][j]
-    lw $t3, 0($t5)                # Valor da célula atual
+    #calcula o endereço da célula e carrega o valor
+    la $t5, TABULEIRO             #carrega a base do TABULEIRO
+    add $t5, $t5, $t4             #endereço de TABULEIRO[linhas-1][j]
+    lw $t3, 0($t5)                #valor da célula atual
 
-    # Verifica se o valor da célula é zero
-    beq $t3, $zero, retornoUm   # Se é zero, retorna 1
+    #verifica se o valor da célula é zero
+    beq $t3, $zero, retornoUm   #se é zero, retorna 1
 
-    # Incrementa j e continua o loop
+    #incrementa j e continua o loop
     li $t7, 1
     add $t9, $t9, $t7              
-    j loopColunas                 # Próxima coluna
+    j loopColunas                 #próxima coluna
 
 fimVerificaEmpate:
     # Se chegou aqui,
-    li $v0, 0                     # Retorna 0 (não há zeros na última linha)
-    jr $ra                        # Retorna
+    li $v0, 0                     #retorna 0 (não há zeros na última linha)
+    jr $ra                        #retorna
 
 retornoUm:
-    li $v0, 1                     # Retorna 0 (há pelo menos um zero)
-    jr $ra                        # Retorna
-
-
+    li $v0, 1                     #retorna 1 (há pelo menos um zero)
+    jr $ra                        #retorna
 
 
 jogada: 
-    add $sp, $sp, -8       # Reserva espaço na pilha para coluna e linha
-    sw $a0, 0($sp)         # Salva coluna em 0($sp)
-    sw $zero, 4($sp)       # Inicializa linha = 0 em 4($sp)
+    add $sp, $sp, -8       #reserva espaço na pilha para coluna e linha
+    sw $a0, 0($sp)         #salva coluna em 0($sp)
+    sw $zero, 4($sp)       #inicializa linha = 0 em 4($sp)
 
 whileColuna:
-    lw $t0, 4($sp)         # Carrega linha em $t0
-    lw $t1, linhas         # Carrega linhas em $t1 (número de linhas)
-    bge $t0, $t1, fimWhileColuna  # Se linha >= linhas, sai do loop
+    lw $t0, 4($sp)         #carrega linha em $t0
+    lw $t1, linhas         #carrega linhas em $t1 (número de linhas)
+    bge $t0, $t1, fimWhileColuna  #se linha >= linhas, sai do loop
 
-    # Calcula o endereço de TABULEIRO[linha][coluna]
-    la $t2, TABULEIRO      # Carrega o endereço base de TABULEIRO em $t2
-    lw $t3, 0($sp)         # Carrega coluna em $t3
+    #calcula o endereço de TABULEIRO[linha][coluna]
+    la $t2, TABULEIRO      #carrega o endereço base de TABULEIRO em $t2
+    lw $t3, 0($sp)         #carrega coluna em $t3
     lw $t9, colunas
     mul $t4, $t0, $t9       # $t4 = linha * colunas
     add $t4, $t4, $t3      # $t4 = linha * colunas + coluna
     mul $t4, $t4, 4        # $t4 = (linha * colunas + coluna) * 4 (offset em bytes)
     add $t9, $t2, $t4      # $t9 = endereço de TABULEIRO[linha][coluna]
 
-    # Verifica se TABULEIRO[linha][coluna] é 0
+    #verifica se TABULEIRO[linha][coluna] é 0
     lw $t5, 0($t9)         # Carrega o valor de TABULEIRO[linha][coluna] em $t5
     beq $t5, $zero, fimWhileColuna  # Se TABULEIRO[linha][coluna] == 0, sai do loop
 
-    # Incrementa linha
-    lw $t6, 4($sp)         # Carrega linha
-    addi $t6, $t6, 1       # Incrementa linha
-    sw $t6, 4($sp)         # Armazena linha de volta na pilha
-    j whileColuna          # Continua o loop
+    #incrementa linha
+    lw $t6, 4($sp)         #carrega linha
+    addi $t6, $t6, 1       #incrementa linha
+    sw $t6, 4($sp)         #armazena linha de volta na pilha
+    j whileColuna          #continua o loop
 
 fimWhileColuna:
-    # Verifica se a jogada é válida: linha >= linhas ou coluna >= colunas ou coluna < 0
-    lw $t0, 4($sp)         # Carrega linha
-    lw $t1, linhas              # Carrega linhas
-    lw $t2, 0($sp)         # Carrega coluna
-    lw $t3, colunas              # Carrega colunas
-    bge $t0, $t1, indisponivel   # Se linha >= linhas, vai para indisponível
-    bge $t2, $t3, indisponivel   # Se coluna >= colunas, vai para indisponível
-    blt $t2, $zero, indisponivel # Se coluna < 0, vai para indisponível
+    #verifica se a jogada é válida: linha >= linhas ou coluna >= colunas ou coluna < 0
+    lw $t0, 4($sp)         #carrega linha
+    lw $t1, linhas              #carrega linhas
+    lw $t2, 0($sp)         #carrega coluna
+    lw $t3, colunas              #carrega colunas
+    bge $t0, $t1, indisponivel   #se linha >= linhas, vai para indisponível
+    bge $t2, $t3, indisponivel   #se coluna >= colunas, vai para indisponível
+    blt $t2, $zero, indisponivel #se coluna < 0, vai para indisponível
 
 atribui:
-    lw $t0, jogador        # Carrega o valor de jogador
-    sw $t0, 0($t9)         # Armazena jogador em TABULEIRO[linha][coluna]
-    li $v0, 1              # Retorna 1 (jogada válida)
-    add $sp, $sp, 8        # Libera o espaço na pilha
-    jr $ra                 # Retorna
+    lw $t0, jogador        #carrega o valor de jogador
+    sw $t0, 0($t9)         #armazena jogador em TABULEIRO[linha][coluna]
+    li $v0, 1              #retorna 1 (jogada válida)
+    add $sp, $sp, 8        #libera o espaço na pilha
+    jr $ra                 #retorna
 
 indisponivel:
-    # Imprime mensagem "Jogada indisponível!"
-    la $a0, msg4           # Carrega a mensagem de erro em $a0
-    li $v0, 4              # Syscall para imprimir string
-    syscall                # Executa syscall
-    li $v0, 0              # Retorna 0 (jogada inválida)
-    add $sp, $sp, 8        # Libera o espaço na pilha
-    jr $ra                 # Retorna
-
-
-
-
+    #imprime mensagem de jogada indisponivel
+    la $a0, msg4           #carrega a mensagem de erro em $a0
+    li $v0, 4              #syscall para imprimir string
+    syscall                #executa syscall
+    li $v0, 0              #retorna 0 (jogada inválida)
+    add $sp, $sp, 8        #libera o espaço na pilha
+    jr $ra                 #retorna
 
 
 verificaVitoria:
@@ -792,11 +784,9 @@ verificaVitoria:
 
 foriVitoria:
     lw $t0, 0($sp)     #carrega i
-
-
+    
     bge $t0, $s0, FimForiVitoria  # verificação do for (i >= linhas)
 
-   
     sw $zero, 4($sp)   #carrega j = 0
 forjVitoria:
 
@@ -806,26 +796,21 @@ forjVitoria:
     add $t5, $zero, $zero
     add $t6, $zero, $zero
     
-
     lw $t1, 4($sp)         # carrega j
     bge $t1, $s1, FimForjVitoria  # verificação do for (j >= colunas)
 
     sw $zero, 8($sp)       # k = 0
     lw $t2, 8($sp)      # k = $t2
 
-    
 forkVitoria:
 
     li $t7, 4  
     bge $t2, $t7, FimForkVitoria  # verificação do for. (k >= 4)
 
 
-
 if1:   # if (i + k < linhas && TABULEIRO[i+k][j] == jogador){  (verificação de vitória nas linhas)
 
     add $t7, $t0, $t2 #$t7 = i + k
-    
-   
 
     bge $t7, $s0, if2  # if (i + k >= linhas)
     mul $t8, $t7, $s1  # $t8 = (i + k) * colunas
@@ -855,14 +840,11 @@ if2:   #if (i + k < linhas && j + k < colunas && TABULEIRO[i+k][j+k] == jogador)
     bne $t9, $s2, if3  # if (TABULEIRO[(i + k)][j + k] != jogador)
 
     
-
     addi $t4, $t4, 1   # cont2++
     li $t7, 4
     bge $t4, $t7, Vitoria  # if (cont2 >= 4)
     
 if3:   # if (j + k >= 0 && i - k < linhas && TABULEIRO[i - k][j + k] == jogador) (verificação de vitória na diagonal secundária)
-
-
 
     add $t8, $t1, $t2         # $t8 = j + k
     blt $t8, $zero, if4       # if (j + k < 0), pula para if4
@@ -893,12 +875,11 @@ if4:   #if (j + k < colunas && TABULEIRO[i][j-k] == jogador){  (verificação de
     lw $t9, 0($t9)                # $t9 = TABULEIRO[i][j - k]
 
    
-
-
     bne $t9, $s2, incrementak     # if (TABULEIRO[i][j - k] != jogador), continue
     addi $t6, $t6, 1              # cont4++
     li $t7, 4
     bge $t6, $t7, Vitoria         # if (cont4 >= 4), vitória
+    
 incrementak:
 
     addi $t2, $t2, 1   # k++
@@ -907,7 +888,6 @@ incrementak:
     j forkVitoria
 
 FimForkVitoria:
-
 
     addi $t1, $t1, 1   # j++
     sw $t1, 4($sp)     # atualiza j na pilha
