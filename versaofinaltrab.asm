@@ -509,8 +509,13 @@ lerColuna:
     addi $v0, $v0, -1           # Ajusta para índice 0-based (coluna--)
     sw $v0, 0($sp)              # Armazena o valor convertido
 
+    
+    la $a0, newline             #printf("\n")
+    li $v0, 4
+    syscall
+
     # Chama a função jogada
-    move $a0, $v0               # Passa o valor para jogada
+    lw $a0, 0($sp)              # Passa o valor lido para jogada
     jal jogada
 
     li $t0, 1                   # Verifica se a jogada foi válida
@@ -547,7 +552,7 @@ continue:
     la $a0, am         # carrega o endereço da string "amarelo"
     li $v0, 4            # syscall para imprimir string
     syscall              # executa a syscall
-    j vermelho2
+    j amarelo2
 vermelho2:
     la $a0, ver         # carrega o endereço da string "vermelho"
     li $v0, 4            # syscall para imprimir string
@@ -795,7 +800,7 @@ foriVitoria:
     lw $t0, 0($sp)     #carrega i
 
 
-    bge $t0, $s0, FimForiVitoria  # verificação do for. (i >= linhas)
+    bge $t0, $s0, FimForiVitoria  # verificação do for (i >= linhas)
 
    
     sw $zero, 4($sp)   #carrega j = 0
@@ -809,7 +814,7 @@ forjVitoria:
     
 
     lw $t1, 4($sp)         # carrega j
-    bge $t1, $s1, FimForjVitoria  # verificação do for. (j >= colunas)
+    bge $t1, $s1, FimForjVitoria  # verificação do for (j >= colunas)
 
     sw $zero, 8($sp)       # k = 0
     lw $t2, 8($sp)      # k = $t2
@@ -860,6 +865,7 @@ if2:   #if (i + k < linhas && j + k < colunas && TABULEIRO[i+k][j+k] == jogador)
     addi $t4, $t4, 1   # cont2++
     li $t7, 4
     bge $t4, $t7, Vitoria  # if (cont2 >= 4)
+    
 if3:   # if (j + k >= 0 && i - k < linhas && TABULEIRO[i - k][j + k] == jogador) (verificação de vitória na diagonal secundária)
 
 
