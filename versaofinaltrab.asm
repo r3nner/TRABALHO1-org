@@ -696,7 +696,7 @@ fimVerificaEmpate:
     jr $ra                        # Retorna
 
 retornoUm:
-    li $v0, 1                     # Retorna 0 (há pelo menos um zero)
+    li $v0, 1                     # Retorna 1 (há pelo menos um zero)
     jr $ra                        # Retorna
 
 
